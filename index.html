@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <title>⚽ FUTEBOL HOJE</title>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            font-weight: 300;
+            font-style: normal;
+            line-height: 1.6;
+            background: linear-gradient(100deg, #000000, #686868);
+            background-size: 200% 200%;
+            color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            
+            text-align: center;
+            color: #000000;
+            font-family: "Poppins", sans-serif;
+            font-weight: 500;
+            font-style: normal;
+        }
+        h2 {
+            text-align: center;
+            color: #000000;
+            font-family: "Poppins", sans-serif;
+            font-weight: 500;
+            font-style: normal;
+            font-size: 17px;
+        }
+
+        header{
+            display: flex;
+            flex-direction: column;
+            background-image: url(/components/09.png);
+            background-size:cover; /* Ajusta a imagem para cobrir todo o elemento */
+            background-position: center; /* Centraliza a imagem no elemento */
+            background-repeat: no-repeat; /* Evita a repetição da imagem */
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            flex-wrap: wrap;  
+        }
+        .match {
+            display: flex;
+            flex-direction: column;
+            background-color: #2e2e2e;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        .match-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .team, .score {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+            flex: 1;
+        }
+        .team img {
+            width: 30px;
+            height: 30px;
+            margin-right: 5px;
+            margin-left: 5px;
+        }
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 15px;
+            flex: 1;
+        }
+        .match-bottom {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #bbbbbb;
+            flex-wrap: wrap;
+        }
+        .match-info {
+            flex: 1;
+        }
+        .league {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+        }
+
+        .league img {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px; /* Espaço entre a imagem e o nome */
+        }
+
+        .league span {
+    color: #bbbbbb;
+    line-height: 50px; /* Alinha o texto verticalmente com a imagem */
+    margin-right: 10px;
+        }
+    p{
+        text-align: center;
+        font-size: 15px;
+    }
+      
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .match-top, .match-bottom {
+                flex-direction: column;
+                align-items: center;
+            }
+            .team, .score {
+                margin: 5px 0;
+                text-align: center;
+            }
+            .league img {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+    <h1>⚽ FUTEBOL HOJE</h1>
+    <h2>Jogos e resultados das principais ligas</h2>
+    </header>
+    <div id="resultsContainer">
+        <!-- Resultados serão inseridos aqui -->
+    </div>
+
+    <script>
+        async function fetchResults() {
+            const today = new Date();
+            const tomorrow = new Date();
+            today.setDate(tomorrow.getDate()+1);
+
+            const formatDate = date => date.toISOString().split('T')[0]; // Formata a data para YYYY-MM-DD
+            const dateFrom = formatDate(tomorrow);
+            const dateTo = formatDate(today);
+
+            const url = `https://cors-anywhere.herokuapp.com/https://api.football-data.org/v4/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+            const apiKey = 'd474a54050144ee3b8298efd5390b0d1'; // Substitua com sua chave API
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Auth-Token': apiKey
+                    }
+                });
+                const data = await response.json();
+                console.log('Dados da API:', data); // Exibe todos os dados no console
+                displayResults(data.matches);
+            } catch (error) {
+                console.error('Erro ao buscar resultados:', error);
+            }
+        }
+        function getStatusLabel(status) {
+    switch (status) {
+        case 'FINISHED':
+            return '✅ Encerrado';
+        case 'SCHEDULED':
+            return '📅 Agendado';
+        case 'IN_PLAY':
+            return '🔴 Em Andamento';
+        case 'PAUSED':
+            return '⏸️ Intervalo';
+        case 'CANCELED':
+            return '❌ Cancelado';
+        case 'TIMED':
+            return '🔄 Aguardando';
+            case 'POSTPONED':
+            return '🔀 Adiado';    
+        default:
+            return status;
+         }
+            }
+
+        function displayResults(matches) {
+            const container = document.querySelector('#resultsContainer');
+            container.innerHTML = '';
+
+            matches.forEach(match => {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'match';
+
+                const homeScore = match.score.fullTime.home !== null ? match.score.fullTime.home : 0;
+                const awayScore = match.score.fullTime.away !== null ? match.score.fullTime.away : 0;
+                
+                function getCompetiotionLabel(matchname) {
+                switch (match.competition.name) {
+                case 'Primera Division':
+                    return 'La Liga';
+                case 'Campeonato Brasileiro Série A':
+                    return 'Brasileirão Série A';
+                
+                default:
+                    return match.competition.name;
+                }
+            }    
+                // Elemento do time da casa e placar
+                const matchTopDiv = document.createElement('div');
+                matchTopDiv.className = 'match-top';
+                matchTopDiv.innerHTML = `
+                    <div class="league">
+                        <img src="${match.competition.emblem}" alt="Logo da Liga">
+                        <span>${getCompetiotionLabel(match.competition.name)}</span>
+                    </div></br>
+                    <div class="team">
+                        <img src="${match.homeTeam.crest}" alt="Escudo do ${match.homeTeam.name}">
+                        <span>${match.homeTeam.name}</span>
+                    </div>
+                    <div class="score">${homeScore} x ${awayScore}</div>
+                    <div class="team">
+                        <img src="${match.awayTeam.crest}" alt="Escudo do ${match.awayTeam.name}">
+                        <span>${match.awayTeam.name}</span>
+                    </div>
+                `;
+
+                // Elemento das informações do jogo
+                const matchBottomDiv = document.createElement('div');
+                matchBottomDiv.className = 'match-bottom';
+
+                const dateTime = new Date(match.utcDate);
+                const formattedDate = dateTime.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                const formattedTime = dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                //SCHEDULED: O jogo está agendado, mas ainda não começou.
+                //LIVE: O jogo está em andamento.
+                //PAUSED: O jogo foi pausado (normalmente para intervalo).
+                //FINISHED: O jogo foi concluído.
+                //POSTPONED: O jogo foi adiado para uma data futura.
+                //CANCELLED: O jogo foi cancelado e não será disputado.
+                //ABANDONED: O jogo foi interrompido antes de ser completado.    
+                
+                matchBottomDiv.innerHTML = `
+                    
+                    <div class="match-info">
+                        <span>${formattedDate} ${formattedTime} - ${getStatusLabel(match.status)}</span>
+                    </div>
+                    
+                `;
+
+                // Adiciona os elementos ao container do jogo
+                matchDiv.appendChild(matchTopDiv);
+                matchDiv.appendChild(matchBottomDiv);
+
+                container.appendChild(matchDiv);
+            });
+        }
+
+        // Buscar e exibir resultados ao carregar a página
+        document.addEventListener('DOMContentLoaded', fetchResults);
+    </script>
+
+</body>
+<footer>
+    <p>&copy; 2024 Matheus Almeida</p>
+</footer>
+</html>
